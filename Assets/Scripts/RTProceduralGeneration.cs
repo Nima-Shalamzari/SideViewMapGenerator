@@ -6,17 +6,42 @@ using UnityEngine.Tilemaps;
 
 public class RTProceduralGeneration : MonoBehaviour
 {
-    [SerializeField] int width, height;
+    [Header("Terrain Gen")]
+    [SerializeField] int width;
+    [SerializeField] int height;
     [SerializeField] float smoothness;
-    [SerializeField] float seed;
+
+    [Header("Cave Gen")]
+    [Range(0,1)]
+    [SerializeField] float modifier;
+
+    [Header("Tile")]
     [SerializeField] TileBase groundTile;
+    [SerializeField] TileBase caveTile;
     [SerializeField] Tilemap groundTileMap;
+    [SerializeField] Tilemap caveTileMap;
+
+    [SerializeField] float seed;
+
     int[,] map;
 
     private void Start() {
         map = GenerateArray(width, height, true);
         map = TerrainGeneration(map);
-        RenderMap(map, groundTileMap, groundTile);
+        RenderMap(map, groundTileMap, caveTileMap, groundTile, caveTile);
+    }
+    private void Update() {
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            Generation();
+        }
+    }
+
+    private void Generation() {
+        seed = Time.time;
+        clearMap();
+        map = GenerateArray(width, height, true);
+        map = TerrainGeneration(map);
+        RenderMap(map, groundTileMap, caveTileMap, groundTile, caveTile);
     }
 
     public int[,] GenerateArray(int width, int height, bool empty) {
@@ -35,19 +60,28 @@ public class RTProceduralGeneration : MonoBehaviour
             perlinHeight = Mathf.RoundToInt(Mathf.PerlinNoise(x / smoothness, seed) * height/2);
             perlinHeight += height / 2;
             for (int y = 0; y < perlinHeight; y++) {
-                map[x, y] = 1;
+                //map[x, y] = 1;
+                int caveValue = Mathf.RoundToInt(Mathf.PerlinNoise((x * modifier) + seed, (y * modifier) + seed));
+                map[x, y] = (caveValue == 1)? 2 : 1;
             }
         }
         return map;
     }
 
-    public void RenderMap(int[,] map, Tilemap groundTileMap, TileBase groundTilebase) {
+    public void RenderMap(int[,] map, Tilemap groundTileMap, Tilemap caveTileMap, TileBase groundTilebase, TileBase caveTile) {
         for (int x = 0; x< width; x++) {
             for (int y = 0; y < height; y++) {
                 if (map[x,y] == 1) {
                     groundTileMap.SetTile(new Vector3Int(x, y, 0), groundTilebase);
+                } else if (map[x,y] ==2) {
+                    caveTileMap.SetTile(new Vector3Int(x, y, 0), caveTile);
                 }
             }
         }
+    }
+
+    private void clearMap() {
+        groundTileMap.ClearAllTiles();
+        caveTileMap.ClearAllTiles();
     }
 }
