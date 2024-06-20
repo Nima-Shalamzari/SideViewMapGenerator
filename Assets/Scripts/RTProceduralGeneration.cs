@@ -20,11 +20,16 @@ public class RTProceduralGeneration : MonoBehaviour
     [SerializeField] int randomFillPercent;
     [SerializeField] int smoothAmount;
 
+    [Header("Water Gen")]
+    //fill with something
+
     [Header("Tile")]
     [SerializeField] TileBase groundTile;
     [SerializeField] TileBase caveTile;
+    [SerializeField] TileBase waterTile;
     [SerializeField] Tilemap groundTileMap;
     [SerializeField] Tilemap caveTileMap;
+    [SerializeField] Tilemap waterTileMap;
 
     [SerializeField] float seed;
 
