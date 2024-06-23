@@ -123,6 +123,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1839735485 &216688675 stripped
+Tilemap:
+  m_CorrespondingSourceObject: {fileID: 4730653772374278796, guid: 6812d9e6314ffff4ca7b57db205b14ab, type: 3}
+  m_PrefabInstance: {fileID: 8280017416548513655}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -383,10 +388,11 @@ MonoBehaviour:
   smoothAmount: 10
   groundTile: {fileID: 11400000, guid: 6c88409d0c932784eb68b1efcec90b62, type: 2}
   caveTile: {fileID: 11400000, guid: 09cd0637d9d1807428dc709dd1fb28cc, type: 2}
-  waterTile: {fileID: 0}
+  waterTile: {fileID: 11400000, guid: 454792ce41374a848b544ff138c59eae, type: 2}
+  topWaterTile: {fileID: 11400000, guid: 55b2d2cc25f611f49810f278ee348359, type: 2}
   groundTileMap: {fileID: 1509312765}
   caveTileMap: {fileID: 666928432}
-  waterTileMap: {fileID: 0}
+  waterTileMap: {fileID: 216688675}
   seed: 30515
 --- !u!4 &865392653
 Transform:
