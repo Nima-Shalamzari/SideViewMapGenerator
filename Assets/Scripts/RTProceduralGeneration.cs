@@ -35,7 +35,7 @@ public class RTProceduralGeneration : MonoBehaviour
 
     [SerializeField] float seed;
 
-    int[,] map;
+    protected int[,] map;
     RTPGAssist assist;
 
     private void Start() {
