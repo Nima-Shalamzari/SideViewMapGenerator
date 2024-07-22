@@ -36,12 +36,16 @@ public class RTProceduralGeneration : MonoBehaviour
     [SerializeField] float seed;
 
     protected int[,] map;
-    RTPGAssist assist;
+    //bool[,] mapo(int x) {  ///An attempt to create a multifunctional variable for map
+    //    bool[,] map = new bool[width, height];
 
+    //    return map;
+    //}
     private void Start() {
         perlinHeightArray = new int[width];
         waterMap = new WaterCheck[9];
         Generation();
+        
     }
     private void Update() {
         if (Input.GetKeyDown(KeyCode.Space)) {
@@ -74,7 +78,6 @@ public class RTProceduralGeneration : MonoBehaviour
         int perlinHeight;
         int maxHeight = 0;
         int minHeight = height;
-        assist = new RTPGAssist(map, width, height);
         for (int x = 0; x < width; x++) {
             perlinHeight = Mathf.RoundToInt(Mathf.PerlinNoise(x / smoothness, seed) * height/2);
             perlinHeight += height / 2;
