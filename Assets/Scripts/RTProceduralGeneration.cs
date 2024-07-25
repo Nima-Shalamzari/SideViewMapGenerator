@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Unity.VisualScripting;
 using UnityEditor.Rendering.Universal;
 using UnityEngine;
@@ -12,7 +14,6 @@ public class RTProceduralGeneration : MonoBehaviour
     [SerializeField] int height;
     [SerializeField] float smoothness;
     int[] perlinHeightArray;
-    WaterCheck[] waterMap;
 
     [Header("Cave Gen")]
     //[Range(0,1)]  for perlin noise cave we need thses two lines of code
@@ -23,6 +24,7 @@ public class RTProceduralGeneration : MonoBehaviour
 
     [Header("Water Gen")]
     //fill with something
+    LinkedListStack<Coordinates> mapList = new LinkedListStack<Coordinates>();
 
     [Header("Tile")]
     [SerializeField] TileBase groundTile;
@@ -36,14 +38,9 @@ public class RTProceduralGeneration : MonoBehaviour
     [SerializeField] float seed;
 
     protected int[,] map;
-    //bool[,] mapo(int x) {  ///An attempt to create a multifunctional variable for map
-    //    bool[,] map = new bool[width, height];
 
-    //    return map;
-    //}
     private void Start() {
         perlinHeightArray = new int[width];
-        waterMap = new WaterCheck[9];
         Generation();
         
     }
@@ -76,8 +73,8 @@ public class RTProceduralGeneration : MonoBehaviour
     public int[,] TerrainGeneration(int[,] map) {
         System.Random pesudoRandom = new System.Random(seed.GetHashCode());
         int perlinHeight;
-        int maxHeight = 0;
-        int minHeight = height;
+        //int maxHeight = 0;
+        //int minHeight = height;
         for (int x = 0; x < width; x++) {
             perlinHeight = Mathf.RoundToInt(Mathf.PerlinNoise(x / smoothness, seed) * height/2);
             perlinHeight += height / 2;
@@ -132,52 +129,46 @@ public class RTProceduralGeneration : MonoBehaviour
         return groundCount;
     }
 
-    //int GetSurroundingGround(int gridx, int gridy, int min, int max) {
-    //    int tempMin = Min(gridy, min);
-    //    int tempMax = Max(gridy, max);
-    //    for (int neby = gridy - 1; neby <= gridy + 1; neby++) {
-    //        if (neby >= 0 && neby < height) {
-    //            if (neby == gridy - 1) {
-    //                for (int nebx = gridx - 1; nebx <= gridx + 1; nebx++) {
-    //                    if (nebx >= 0 && nebx < width) {
-    //                        if (map[nebx,neby] == 2) {
-    //                            tempMin = Min(neby, min);
-    //                            return GetSurroundingGround(nebx, neby, tempMin, tempMax);
-    //                        }
-    //                    }
-    //                }
-    //            }
-    //            else if (neby == gridy) {
-    //                int nebx = gridx + 1;
-    //                if(nebx < width) {
-    //                    if (map[nebx, neby] == 2) {
-    //                        return GetSurroundingGround(nebx, neby, tempMin, tempMax);
-    //                    }
-    //                }
-    //            }
-    //            else if (neby == gridy + 1) {
-    //                for (int nebx = gridx + 1; nebx >= gridx - 1; nebx--) {
-    //                    if (nebx >= 0 && nebx < width) {
-    //                        if (map[nebx, neby] == 2) {
-    //                            tempMax = Max(neby, max);
-    //                            return GetSurroundingGround(nebx, neby, tempMin, tempMax);
-    //                        }
-    //                    }
-    //                }
-    //                neby = gridy;
-    //                int nex = gridx - 1;
-    //                if (nex >= 0 && nex < width) {
-    //                    if (map[nex, neby] == 2) {
-    //                        tempMax = Max(neby, max);
-    //                        return GetSurroundingGround(nex, neby, tempMin, tempMax);
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
-    //    return this;
-    //}
+    void caveAnalysis(int[,] map) {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                if (map[x, y] == 2) {
 
+                }
+            }
+        }
+    }
+    void caveAnalysisAssistant(int[,] map, int x, int y) {
+        if (map[x,(y -1)] == 2) {
+            mapList.Push(new Coordinates(x,y -1));
+            map[x, y - 1] = 3;
+            Coordinates coord = mapList.Peek();
+            caveAnalysisAssistant(map, coord.X, coord.Y);
+        }
+        else if (map[x, (y + 1)] == 2) {
+            mapList.Push(new Coordinates(x, y + 1));
+            map[x, y + 1] = 3;
+            Coordinates coord = mapList.Peek();
+            caveAnalysisAssistant(map, coord.X, coord.Y);
+        }
+        else if (map[(x -1), y] == 2) {
+            mapList.Push(new Coordinates((x -1), y));
+            map[(x -1), y] = 3;
+            Coordinates coord = mapList.Peek();
+            caveAnalysisAssistant(map, coord.X, coord.Y);
+        }
+        else if (map[(x +1), y] == 2) {
+            mapList.Push(new Coordinates((x +1), y));
+            map[(x +1), y] = 3;
+            Coordinates coord = mapList.Peek();
+            caveAnalysisAssistant(map, coord.X, coord.Y);
+        } else {
+            mapList.Pop();
+            Coordinates coord = mapList.Peek();
+            caveAnalysisAssistant(map, coord.X, coord.Y);
+        }
+
+    }
     public void RenderMap(int[,] map, Tilemap groundTileMap, Tilemap caveTileMap, TileBase groundTilebase, TileBase caveTile) {
         for (int x = 0; x< width; x++) {
             for (int y = 0; y < height; y++) {
@@ -194,46 +185,13 @@ public class RTProceduralGeneration : MonoBehaviour
         groundTileMap.ClearAllTiles();
         caveTileMap.ClearAllTiles();
     }
-
-    //private int Max(int Maxy, int max) {
-    //    Maxy = (max > Maxy) ? max : Maxy;
-    //    return Maxy;
-    //}
-    //private int Min(int Miny, int min) {
-    //    Miny = (min < Miny) ? min : Miny;
-    //    return Miny;
-    //}
 }
 
-
-public struct WaterCheck {
-    internal int Xlocation;
-    internal int Ylocation;
-    internal int Miny;
-    internal int Maxy;
-    internal int Typenum;
-    internal bool Checked;
-
-    internal WaterCheck(int x, int y, int mny, int mxy, int t) {
-        Xlocation = x;
-        Ylocation = y;
-        Miny = mny;
-        Maxy = mxy;
-        Typenum = t;
-        Checked = false;
+struct Coordinates {
+    public int X, Y;
+    public Coordinates(int x, int y) {
+        X = x; Y = y;
     }
-
-    //internal int Minimum(int min) {
-    //    Miny = (min < Miny) ? min : Miny;
-    //    return Miny;
-    //}
-    //internal int Maximum(int max) {
-    //    Maxy = (max < Maxy) ? max : Maxy;
-    //    return Maxy;
-    //}
-    internal void Check() {
-        Checked = true;
-    }
-
 
 }
+
