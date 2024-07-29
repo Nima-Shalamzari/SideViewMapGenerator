@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
@@ -23,8 +24,8 @@ public class RTProceduralGeneration : MonoBehaviour
     [SerializeField] int smoothAmount;
 
     [Header("Water Gen")]
-    //fill with something
     LinkedListStack<Coordinates> mapList = new LinkedListStack<Coordinates>();
+    private int minWater, maxWater, randHeight;
 
     [Header("Tile")]
     [SerializeField] TileBase groundTile;
@@ -56,7 +57,8 @@ public class RTProceduralGeneration : MonoBehaviour
         map = GenerateArray(width, height, true);
         map = TerrainGeneration(map);
         SmoothMap(smoothAmount);
-        RenderMap(map, groundTileMap, caveTileMap, groundTile, caveTile);
+        map = caveAnalysis(map);
+        RenderMap(map, groundTileMap, caveTileMap,waterTileMap, groundTile, caveTile, waterTile);
     }
 
     public int[,] GenerateArray(int width, int height, bool empty) {
@@ -129,53 +131,80 @@ public class RTProceduralGeneration : MonoBehaviour
         return groundCount;
     }
 
-    void caveAnalysis(int[,] map) {
+    int[,] caveAnalysis(int[,] map) {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 if (map[x, y] == 2) {
-
+                    minWater = height - 1;
+                    maxWater = 0;
+                    caveAnalysisAssistant(map, x, y);
                 }
             }
         }
+        return map;
     }
     void caveAnalysisAssistant(int[,] map, int x, int y) {
-        if (map[x,(y -1)] == 2) {
+        if (y < minWater) minWater = y;
+        if (y > maxWater) maxWater = y;
+        // it doesn't traverse because of the if logic sequence.
+        if (y <= randHeight) {
+            map[x, y] = 4;
+        }
+        if (map[x, y] == 2) {
+            map[x, y] = 3;
+            mapList.Push(new Coordinates(x, y));
+            Coordinates coord = mapList.Peek();
+            caveAnalysisAssistant(map, coord.X, coord.Y);
+        }else if (map[x,(y -1)] == 2) {
             mapList.Push(new Coordinates(x,y -1));
             map[x, y - 1] = 3;
             Coordinates coord = mapList.Peek();
             caveAnalysisAssistant(map, coord.X, coord.Y);
-        }
-        else if (map[x, (y + 1)] == 2) {
+        }else if (map[x, (y + 1)] == 2) {
             mapList.Push(new Coordinates(x, y + 1));
             map[x, y + 1] = 3;
             Coordinates coord = mapList.Peek();
             caveAnalysisAssistant(map, coord.X, coord.Y);
-        }
-        else if (map[(x -1), y] == 2) {
+        }else if (map[(x -1), y] == 2) {
             mapList.Push(new Coordinates((x -1), y));
             map[(x -1), y] = 3;
             Coordinates coord = mapList.Peek();
             caveAnalysisAssistant(map, coord.X, coord.Y);
-        }
-        else if (map[(x +1), y] == 2) {
+        }else if (map[(x +1), y] == 2) {
             mapList.Push(new Coordinates((x +1), y));
             map[(x +1), y] = 3;
             Coordinates coord = mapList.Peek();
             caveAnalysisAssistant(map, coord.X, coord.Y);
         } else {
-            mapList.Pop();
-            Coordinates coord = mapList.Peek();
-            caveAnalysisAssistant(map, coord.X, coord.Y);
+            if(mapList.Count() <= 1) {
+                mapList.Pop();
+                Coordinates coord = mapList.Peek();
+                caveAnalysisAssistant(map, coord.X, coord.Y);
+            }else if (mapList.Count() == 0) mapList.Pop();
         }
-
+        if (randHeight == 0) {
+            randHeight = RandomWaterHeight(minWater, maxWater);
+            mapList.Push(new Coordinates(x, y));
+            Coordinates coordi = mapList.Peek();
+            caveAnalysisAssistant(map, coordi.X, coordi.Y);
+        }else if (randHeight != 0) randHeight = 0;
     }
-    public void RenderMap(int[,] map, Tilemap groundTileMap, Tilemap caveTileMap, TileBase groundTilebase, TileBase caveTile) {
+
+    int RandomWaterHeight(int min, int max) {
+        System.Random pesudoRandom = new System.Random((int)DateTime.Now.Ticks);
+        int randomHeight = pesudoRandom.Next(min,max);
+        return randomHeight;
+    }
+
+    public void RenderMap(int[,] map, Tilemap groundTileMap, Tilemap caveTileMap,Tilemap waterTileMap, TileBase groundTilebase, TileBase caveTileBase, TileBase waterTileBase) {
         for (int x = 0; x< width; x++) {
             for (int y = 0; y < height; y++) {
                 if (map[x,y] == 1) {
                     groundTileMap.SetTile(new Vector3Int(x, y, 0), groundTilebase);
                 } else if (map[x,y] ==2) {
-                    caveTileMap.SetTile(new Vector3Int(x, y, 0), caveTile);
+                    caveTileMap.SetTile(new Vector3Int(x, y, 0), caveTileBase);
+                } else if (map[x,y] == 4) {
+                    waterTileMap.SetTile(new Vector3Int(x, y, 0), waterTileBase);
                 }
             }
         }
