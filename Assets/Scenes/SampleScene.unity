@@ -384,7 +384,7 @@ MonoBehaviour:
   width: 100
   height: 50
   smoothness: 45
-  randomFillPercent: 50
+  randomFillPercent: 55
   smoothAmount: 10
   groundTile: {fileID: 11400000, guid: 6c88409d0c932784eb68b1efcec90b62, type: 2}
   caveTile: {fileID: 11400000, guid: 09cd0637d9d1807428dc709dd1fb28cc, type: 2}
@@ -393,7 +393,7 @@ MonoBehaviour:
   groundTileMap: {fileID: 1509312765}
   caveTileMap: {fileID: 666928432}
   waterTileMap: {fileID: 216688675}
-  seed: 37307
+  seed: 32979
 --- !u!4 &865392653
 Transform:
   m_ObjectHideFlags: 0

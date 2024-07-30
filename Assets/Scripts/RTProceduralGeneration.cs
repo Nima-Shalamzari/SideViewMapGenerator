@@ -138,6 +138,7 @@ public class RTProceduralGeneration : MonoBehaviour
                     minWater = height - 1;
                     maxWater = 0;
                     caveAnalysisAssistant(map, x, y);
+                    randHeight = 0;
                 }
             }
         }
@@ -146,53 +147,96 @@ public class RTProceduralGeneration : MonoBehaviour
     void caveAnalysisAssistant(int[,] map, int x, int y) {
         if (y < minWater) minWater = y;
         if (y > maxWater) maxWater = y;
-        // it doesn't traverse because of the if logic sequence.
-        if (y <= randHeight) {
-            map[x, y] = 4;
-        }
         if (map[x, y] == 2) {
             map[x, y] = 3;
             mapList.Push(new Coordinates(x, y));
             Coordinates coord = mapList.Peek();
             caveAnalysisAssistant(map, coord.X, coord.Y);
-        }else if (map[x,(y -1)] == 2) {
+        }else if (y > 0 && map[x,(y -1)] == 2) {
             mapList.Push(new Coordinates(x,y -1));
             map[x, y - 1] = 3;
             Coordinates coord = mapList.Peek();
             caveAnalysisAssistant(map, coord.X, coord.Y);
-        }else if (map[x, (y + 1)] == 2) {
+        }else if (y < map.GetLength(1) - 1 && map[x, (y + 1)] == 2) {
             mapList.Push(new Coordinates(x, y + 1));
             map[x, y + 1] = 3;
             Coordinates coord = mapList.Peek();
             caveAnalysisAssistant(map, coord.X, coord.Y);
-        }else if (map[(x -1), y] == 2) {
+        }else if (x > 0 && map[(x -1), y] == 2) {
             mapList.Push(new Coordinates((x -1), y));
             map[(x -1), y] = 3;
             Coordinates coord = mapList.Peek();
             caveAnalysisAssistant(map, coord.X, coord.Y);
-        }else if (map[(x +1), y] == 2) {
+        }else if (x < map.GetLength(0) - 1 && map[(x +1), y] == 2) {
             mapList.Push(new Coordinates((x +1), y));
             map[(x +1), y] = 3;
             Coordinates coord = mapList.Peek();
             caveAnalysisAssistant(map, coord.X, coord.Y);
         } else {
-            if(mapList.Count() <= 1) {
+            if (mapList.Count() > 0) {
                 mapList.Pop();
+                if (mapList.Count() > 0) {
+                    Coordinates coord = mapList.Peek();
+                    caveAnalysisAssistant(map, coord.X, coord.Y);
+                }
+            }
+        }
+        if(randHeight > 0) {
+            if (map[x, y] == 3) {
+                map[x, y] = (y <= randHeight) ?  4 : 5;
+                mapList.Push(new Coordinates(x, y));
                 Coordinates coord = mapList.Peek();
                 caveAnalysisAssistant(map, coord.X, coord.Y);
-            }else if (mapList.Count() == 0) mapList.Pop();
-        }
-        if (randHeight == 0) {
+            }
+            else if (y > 0 && map[x, (y - 1)] == 3) {
+                map[x, y -1] = (y -1 <= randHeight) ? 4 : 5;
+                mapList.Push(new Coordinates(x, y - 1));
+                Coordinates coord = mapList.Peek();
+                caveAnalysisAssistant(map, coord.X, coord.Y);
+            }
+            else if (y < map.GetLength(1) - 1 && map[x, (y + 1)] == 3) {
+                map[x, y +1] = (y +1 <= randHeight) ? 4 : 5;
+                mapList.Push(new Coordinates(x, y + 1));
+                Coordinates coord = mapList.Peek();
+                caveAnalysisAssistant(map, coord.X, coord.Y);
+            }
+            else if (x > 0 && map[(x - 1), y] == 3) {
+                map[x -1, y] = (y <= randHeight) ? 4 : 5;
+                mapList.Push(new Coordinates((x - 1), y));
+                Coordinates coord = mapList.Peek();
+                caveAnalysisAssistant(map, coord.X, coord.Y);
+            }
+            else if (x < map.GetLength(0) - 1 && map[(x + 1), y] == 3) {
+                map[x +1, y] = (y <= randHeight) ? 4 : 5;
+                mapList.Push(new Coordinates((x + 1), y));
+                Coordinates coord = mapList.Peek();
+                caveAnalysisAssistant(map, coord.X, coord.Y);
+            }
+            else {
+                if (mapList.Count() > 0) {
+                    mapList.Pop();
+                    if (mapList.Count() > 0) {
+                        Coordinates coord = mapList.Peek();
+                        caveAnalysisAssistant(map, coord.X, coord.Y);
+                    }
+                }
+            }
+        }else if (randHeight == 0) {
+            Debug.Log("x is equal to : " + x);
+            Debug.Log("y is equal to : " + y);
             randHeight = RandomWaterHeight(minWater, maxWater);
             mapList.Push(new Coordinates(x, y));
             Coordinates coordi = mapList.Peek();
             caveAnalysisAssistant(map, coordi.X, coordi.Y);
-        }else if (randHeight != 0) randHeight = 0;
+        }
     }
 
     int RandomWaterHeight(int min, int max) {
         System.Random pesudoRandom = new System.Random((int)DateTime.Now.Ticks);
-        int randomHeight = pesudoRandom.Next(min,max);
+        int randomHeight = pesudoRandom.Next(min-1,max);
+        Debug.Log("rand height is equal to : " + randomHeight);
+        Debug.Log("min is equal to : " + min);
+        Debug.Log("max is equal to : " + max);
         return randomHeight;
     }
 
