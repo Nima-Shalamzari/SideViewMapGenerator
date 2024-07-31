@@ -246,7 +246,7 @@ public class RTProceduralGeneration : MonoBehaviour
             for (int y = 0; y < height; y++) {
                 if (map[x,y] == 1) {
                     groundTileMap.SetTile(new Vector3Int(x, y, 0), groundTilebase);
-                } else if (map[x,y] ==2) {
+                } else if (map[x,y] == 2 || map[x, y] == 5) {
                     caveTileMap.SetTile(new Vector3Int(x, y, 0), caveTileBase);
                 } else if (map[x,y] == 4) {
                     waterTileMap.SetTile(new Vector3Int(x, y, 0), waterTileBase);
