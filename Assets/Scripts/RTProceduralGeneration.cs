@@ -14,6 +14,7 @@ public class RTProceduralGeneration : MonoBehaviour
     [SerializeField] int width;
     [SerializeField] int height;
     [SerializeField] float smoothness;
+    [SerializeField] int WaterLevel;
     int[] perlinHeightArray;
 
     [Header("Cave Gen")]
@@ -58,6 +59,7 @@ public class RTProceduralGeneration : MonoBehaviour
         map = TerrainGeneration(map);
         SmoothMap(smoothAmount);
         map = caveAnalysis(map);
+        map = surfaceWaterLevel(map);
         RenderMap(map, groundTileMap, caveTileMap,waterTileMap, groundTile, caveTile, waterTile);
     }
 
@@ -222,8 +224,6 @@ public class RTProceduralGeneration : MonoBehaviour
                 }
             }
         }else if (randHeight == 0) {
-            Debug.Log("x is equal to : " + x);
-            Debug.Log("y is equal to : " + y);
             randHeight = RandomWaterHeight(minWater, maxWater);
             mapList.Push(new Coordinates(x, y));
             Coordinates coordi = mapList.Peek();
@@ -231,13 +231,14 @@ public class RTProceduralGeneration : MonoBehaviour
         }
     }
 
-    int RandomWaterHeight(int min, int max) {
-        System.Random pesudoRandom = new System.Random((int)DateTime.Now.Ticks);
-        int randomHeight = pesudoRandom.Next(min-1,max);
-        Debug.Log("rand height is equal to : " + randomHeight);
-        Debug.Log("min is equal to : " + min);
-        Debug.Log("max is equal to : " + max);
-        return randomHeight;
+    int[,] surfaceWaterLevel(int[,] map) {
+        int waterLevel = WaterLevelDecleration(perlinHeightArray);
+        for (int x = 0; x < width; x++) {
+            for (int y = perlinHeightArray[x]; y <= waterLevel; y++) {
+                map[x, y] = 4;
+            }
+        }
+        return map;
     }
 
     public void RenderMap(int[,] map, Tilemap groundTileMap, Tilemap caveTileMap,Tilemap waterTileMap, TileBase groundTilebase, TileBase caveTileBase, TileBase waterTileBase) {
@@ -257,6 +258,26 @@ public class RTProceduralGeneration : MonoBehaviour
     private void clearMap() {
         groundTileMap.ClearAllTiles();
         caveTileMap.ClearAllTiles();
+        waterTileMap.ClearAllTiles();
+    }
+
+    int RandomWaterHeight(int min, int max) {
+        System.Random pesudoRandom = new System.Random((int)DateTime.Now.Ticks + seed.GetHashCode());
+        int randomHeight = pesudoRandom.Next(min - 1, max);
+        return randomHeight;
+    }
+
+    private int WaterLevelDecleration(int[] perlinHeight) {
+        int perlinHeightMax = 0;
+        int perlinHeightMin = height;
+        for (int x = 0; x < width; x++) {
+            perlinHeightMax = (perlinHeight[x] >= perlinHeightMax) ? perlinHeight[x] : perlinHeightMax;
+            perlinHeightMin = (perlinHeight[x] <= perlinHeightMin) ? perlinHeight[x] : perlinHeightMin;
+        }
+        WaterLevel = perlinHeightMin +( (perlinHeightMax - perlinHeightMin) / 3);
+        //System.Random pesudoRandom = new System.Random((int)DateTime.Now.Ticks);
+        //WaterLevel = pesudoRandom.Next(perlinHeightMin , perlinHeightMax);
+        return WaterLevel;
     }
 }
 
