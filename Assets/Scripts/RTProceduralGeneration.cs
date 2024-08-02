@@ -17,6 +17,9 @@ public class RTProceduralGeneration : MonoBehaviour
     [SerializeField] int WaterLevel;
     int[] perlinHeightArray;
 
+    [Header("Mineral Gen")]
+    //Fill here with some info
+
     [Header("Cave Gen")]
     //[Range(0,1)]  for perlin noise cave we need thses two lines of code
     //[SerializeField] float modifier;
@@ -32,6 +35,7 @@ public class RTProceduralGeneration : MonoBehaviour
     [SerializeField] TileBase groundTile;
     [SerializeField] TileBase caveTile;
     [SerializeField] TileBase waterTile;
+    [SerializeField] TileBase stoneTile;
     [SerializeField] TileBase topWaterTile;
     [SerializeField] Tilemap groundTileMap;
     [SerializeField] Tilemap caveTileMap;
@@ -40,6 +44,7 @@ public class RTProceduralGeneration : MonoBehaviour
     [SerializeField] float seed;
 
     protected int[,] map;
+    private int tempGroundCheck;
 
     private void Start() {
         perlinHeightArray = new int[width];
@@ -60,7 +65,7 @@ public class RTProceduralGeneration : MonoBehaviour
         SmoothMap(smoothAmount);
         map = caveAnalysis(map);
         map = surfaceWaterLevel(map);
-        RenderMap(map, groundTileMap, caveTileMap,waterTileMap, groundTile, caveTile, waterTile);
+        RenderMap(map, groundTileMap, caveTileMap,waterTileMap, groundTile, caveTile, waterTile, stoneTile);
     }
 
     public int[,] GenerateArray(int width, int height, bool empty) {
@@ -76,6 +81,7 @@ public class RTProceduralGeneration : MonoBehaviour
 
     public int[,] TerrainGeneration(int[,] map) {
         System.Random pesudoRandom = new System.Random(seed.GetHashCode());
+        System.Random pesudoStoneRandom = new System.Random((int) DateTime.Now.Ticks);
         int perlinHeight;
         //int maxHeight = 0;
         //int minHeight = height;
@@ -88,6 +94,9 @@ public class RTProceduralGeneration : MonoBehaviour
                 //int caveValue = Mathf.RoundToInt(Mathf.PerlinNoise((x * modifier) + seed, (y * modifier) + seed)); we use these two lines for using perlin noise to generate caves.
                 //map[x, y] = (caveValue == 1)? 2 : 1;
                 map[x, y] = (pesudoRandom.Next(1, 100) < randomFillPercent) ? 1 : 2;
+                if (map[x,y] == 1) {
+                    map[x, y] = (pesudoStoneRandom.Next(1, 100) < randomFillPercent) ? 6 : 1;
+                }
                 //assist.GetSurroundingGround(x, y, minHeight, maxHeight);
 
             }
@@ -105,7 +114,8 @@ public class RTProceduralGeneration : MonoBehaviour
                     else {
                         int surroundingGroundCount = GetSurroundingGroundCount(x, y);
                         if (surroundingGroundCount > 4) {
-                            map[x, y] = 1;
+                            map[x, y] = (tempGroundCheck == 1) ? 1 : 6;
+                            tempGroundCheck = 0;
                         }
                         else if (surroundingGroundCount < 4) {
                             map[x, y] = 2;
@@ -119,17 +129,23 @@ public class RTProceduralGeneration : MonoBehaviour
 
     int GetSurroundingGroundCount(int gridx, int gridy) {
         int groundCount = 0;
+        int Ground = 0, Stone = 0;
         for (int nebx = gridx-1; nebx <= gridx+1; nebx++) {
             for (int neby = gridy-1; neby <= gridy+1; neby++) {
                 if (nebx >= 0 && nebx < width && neby >= 0 && neby < height) { //shouldn't be out of neightbourhood zone
                     if (nebx != gridx || neby != gridy) { //shouldn't be the middle tile
                         if (map[nebx,neby] == 1) {
                             groundCount++;
+                            Ground++;
+                        }else if (map[nebx, neby] == 6) {
+                            groundCount++;
+                            Stone++;
                         }
                     }
                 }
             }
         }
+        tempGroundCheck = (Ground >= Stone) ? 1 : 6;
         return groundCount;
     }
 
@@ -241,15 +257,17 @@ public class RTProceduralGeneration : MonoBehaviour
         return map;
     }
 
-    public void RenderMap(int[,] map, Tilemap groundTileMap, Tilemap caveTileMap,Tilemap waterTileMap, TileBase groundTilebase, TileBase caveTileBase, TileBase waterTileBase) {
+    public void RenderMap(int[,] map, Tilemap groundTileMap, Tilemap caveTileMap,Tilemap waterTileMap, TileBase groundTileBase, TileBase caveTileBase, TileBase waterTileBase, TileBase stoneTileBase) {
         for (int x = 0; x< width; x++) {
             for (int y = 0; y < height; y++) {
-                if (map[x,y] == 1) {
-                    groundTileMap.SetTile(new Vector3Int(x, y, 0), groundTilebase);
-                } else if (map[x,y] == 2 || map[x, y] == 5) {
+                if (map[x, y] == 1) {
+                    groundTileMap.SetTile(new Vector3Int(x, y, 0), groundTileBase);
+                }else if (map[x, y] == 2 || map[x, y] == 5) {
                     caveTileMap.SetTile(new Vector3Int(x, y, 0), caveTileBase);
-                } else if (map[x,y] == 4) {
+                }else if (map[x, y] == 4) {
                     waterTileMap.SetTile(new Vector3Int(x, y, 0), waterTileBase);
+                }else if (map[x, y] == 6) {
+                    groundTileMap.SetTile(new Vector3Int(x, y, 0), stoneTileBase);
                 }
             }
         }
@@ -262,7 +280,7 @@ public class RTProceduralGeneration : MonoBehaviour
     }
 
     int RandomWaterHeight(int min, int max) {
-        System.Random pesudoRandom = new System.Random((int)DateTime.Now.Ticks + seed.GetHashCode());
+        System.Random pesudoRandom = new System.Random((int)DateTime.Now.Ticks);
         int randomHeight = pesudoRandom.Next(min - 1, max);
         return randomHeight;
     }
