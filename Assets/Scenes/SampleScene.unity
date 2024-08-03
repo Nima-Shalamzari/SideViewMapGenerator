@@ -385,6 +385,8 @@ MonoBehaviour:
   height: 50
   smoothness: 45
   WaterLevel: 0
+  randomStoneFillPercent: 33
+  modifier: 0.556
   randomFillPercent: 55
   smoothAmount: 10
   groundTile: {fileID: 11400000, guid: 6c88409d0c932784eb68b1efcec90b62, type: 2}

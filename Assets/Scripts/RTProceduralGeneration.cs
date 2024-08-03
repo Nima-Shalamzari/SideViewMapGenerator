@@ -19,10 +19,11 @@ public class RTProceduralGeneration : MonoBehaviour
 
     [Header("Mineral Gen")]
     //Fill here with some info
-
+    [Range(0, 100)]
+    [SerializeField] int randomStoneFillPercent;
     [Header("Cave Gen")]
-    //[Range(0,1)]  for perlin noise cave we need thses two lines of code
-    //[SerializeField] float modifier;
+    [Range(0,1)]//  for perlin noise cave we need thses two lines of code
+    [SerializeField] float modifier;
     [Range(0,100)]
     [SerializeField] int randomFillPercent;
     [SerializeField] int smoothAmount;
@@ -93,9 +94,10 @@ public class RTProceduralGeneration : MonoBehaviour
                 //map[x, y] = 1; we use this line for ground generation only
                 //int caveValue = Mathf.RoundToInt(Mathf.PerlinNoise((x * modifier) + seed, (y * modifier) + seed)); we use these two lines for using perlin noise to generate caves.
                 //map[x, y] = (caveValue == 1)? 2 : 1;
+                float stoneValue = Mathf.PerlinNoise((pesudoStoneRandom.Next(1, 100) * modifier) + seed, (y * modifier) + seed);
                 map[x, y] = (pesudoRandom.Next(1, 100) < randomFillPercent) ? 1 : 2;
                 if (map[x,y] == 1) {
-                    map[x, y] = (pesudoStoneRandom.Next(1, 100) < randomFillPercent) ? 6 : 1;
+                    map[x, y] = ((stoneValue * 100) < randomStoneFillPercent) ? 6 : 1;
                 }
                 //assist.GetSurroundingGround(x, y, minHeight, maxHeight);
 
@@ -108,10 +110,11 @@ public class RTProceduralGeneration : MonoBehaviour
         for (int i = 0; i < smoothAmount; i++) {
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < perlinHeightArray[x]; y++) {
-                    if (x == 0 || y == 0 || x == width - 1 || y == perlinHeightArray[x] - 1) {
+                    if (y ==0) {
+                        map[x, y] = 6;
+                    }else if (x == 0 || y == 0 || x == width - 1 || y == perlinHeightArray[x] - 1) {
                         map[x, y] = 1;
-                    }
-                    else {
+                    }else {
                         int surroundingGroundCount = GetSurroundingGroundCount(x, y);
                         if (surroundingGroundCount > 4) {
                             map[x, y] = (tempGroundCheck == 1) ? 1 : 6;
@@ -119,6 +122,7 @@ public class RTProceduralGeneration : MonoBehaviour
                         }
                         else if (surroundingGroundCount < 4) {
                             map[x, y] = 2;
+                            tempGroundCheck = 0;
                         }
                     }
                 }
