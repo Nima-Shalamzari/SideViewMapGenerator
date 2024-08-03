@@ -384,11 +384,13 @@ MonoBehaviour:
   width: 100
   height: 50
   smoothness: 45
+  WaterLevel: 0
   randomFillPercent: 55
   smoothAmount: 10
   groundTile: {fileID: 11400000, guid: 6c88409d0c932784eb68b1efcec90b62, type: 2}
   caveTile: {fileID: 11400000, guid: 09cd0637d9d1807428dc709dd1fb28cc, type: 2}
   waterTile: {fileID: 11400000, guid: 454792ce41374a848b544ff138c59eae, type: 2}
+  stoneTile: {fileID: 11400000, guid: 7df124078d2c88d4695110774140c66a, type: 2}
   topWaterTile: {fileID: 11400000, guid: 55b2d2cc25f611f49810f278ee348359, type: 2}
   groundTileMap: {fileID: 1509312765}
   caveTileMap: {fileID: 666928432}
