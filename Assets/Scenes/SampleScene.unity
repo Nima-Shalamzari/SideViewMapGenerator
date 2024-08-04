@@ -385,7 +385,7 @@ MonoBehaviour:
   height: 50
   smoothness: 45
   WaterLevel: 0
-  randomStoneFillPercent: 33
+  randomStoneFillPercent: 54
   modifier: 0.556
   randomFillPercent: 55
   smoothAmount: 10

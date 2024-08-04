@@ -110,11 +110,13 @@ public class RTProceduralGeneration : MonoBehaviour
         for (int i = 0; i < smoothAmount; i++) {
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < perlinHeightArray[x]; y++) {
-                    if (y ==0) {
+                    if (y == 0 || ((x == 0 || x == width -1) && y < (perlinHeightArray[x] / 2))) {
                         map[x, y] = 6;
-                    }else if (x == 0 || y == 0 || x == width - 1 || y == perlinHeightArray[x] - 1) {
+                    }
+                    else if (x == 0 || y == 0 || x == width - 1 || y == perlinHeightArray[x] - 1) {
                         map[x, y] = 1;
-                    }else {
+                    }
+                    else {
                         int surroundingGroundCount = GetSurroundingGroundCount(x, y);
                         if (surroundingGroundCount > 4) {
                             map[x, y] = (tempGroundCheck == 1) ? 1 : 6;
