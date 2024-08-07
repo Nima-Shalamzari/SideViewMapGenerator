@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEditor.Rendering.Universal;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -33,15 +34,20 @@ public class RTProceduralGeneration : MonoBehaviour
     LinkedListStack<Coordinates> mapList = new LinkedListStack<Coordinates>();
     private int minWater, maxWater, randHeight;
 
+    [Header("Surface environment Gen")]
+
+
     [Header("Tile")]
     [SerializeField] TileBase groundTile;
     [SerializeField] TileBase caveTile;
     [SerializeField] TileBase waterTile;
     [SerializeField] TileBase stoneTile;
     [SerializeField] TileBase topWaterTile;
+    [SerializeField] TileBase TreeTile;
     [SerializeField] Tilemap groundTileMap;
     [SerializeField] Tilemap caveTileMap;
     [SerializeField] Tilemap waterTileMap;
+    [SerializeField] Tilemap environmentTileMap;
 
     [Header("Tile")]
     [SerializeField] float seed;
@@ -74,7 +80,8 @@ public class RTProceduralGeneration : MonoBehaviour
         map = stoneGeneration(map);
         map = caveAnalysis(map);
         map = surfaceWaterLevel(map);
-        RenderMap(map, groundTileMap, caveTileMap,waterTileMap, groundTile, caveTile, waterTile, stoneTile);
+        map = treeGeneration(map);
+        RenderMap(map, groundTileMap, caveTileMap,waterTileMap, environmentTileMap, groundTile, caveTile, waterTile, stoneTile, TreeTile);
     }
 
     public int[,] GenerateArray(int width, int height, bool empty) {
@@ -242,7 +249,7 @@ public class RTProceduralGeneration : MonoBehaviour
             for (int y = modifiedHeightStartPoint; y < modifiedHeight; y++) {
                     //Debug.Log("noiseMap[" + X.ToString() + ", " + Y.ToString() + "] is equal to : " + noiseMap[X, Y]);
                     noiseMap[x,y] = Mathf.InverseLerp(minNoiseHeight, maxNoiseHeight, noiseMap[x, y]);
-                    Debug.Log("noiseMap[" + x.ToString() + ", " + y.ToString() + "] is equal to : " + noiseMap[x, y]);
+                    //Debug.Log("noiseMap[" + x.ToString() + ", " + y.ToString() + "] is equal to : " + noiseMap[x, y]);
                     if (noiseMap[x, y] > fillPercent && map[x, y] == 1) {
                         map[x, y] = 6;
                     }
@@ -366,7 +373,29 @@ public class RTProceduralGeneration : MonoBehaviour
         return map;
     }
 
-    public void RenderMap(int[,] map, Tilemap groundTileMap, Tilemap caveTileMap,Tilemap waterTileMap, TileBase groundTileBase, TileBase caveTileBase, TileBase waterTileBase, TileBase stoneTileBase) {
+    private int[,] treeGeneration(int[,] map) {
+        bool collision = false;
+        for (int x = 0; x < width; x++) {
+            int y = perlinHeightArray[x];
+            System.Random pesudoTreeRandom = new System.Random((int)DateTime.Now.Ticks);
+            if (map[x,y] == 0 && map[x,y-1] == 1) {
+                Debug.Log("working");
+                for (int xmas = x - 5; xmas <= x + 5; xmas++) {
+                    if (xmas >= 0 && xmas < width && y + 2 < height) { //shouldn't be out of neightbourhood zone
+                        if (map[xmas, y + 2] != 0) collision = true;
+                    }
+                }
+                if (collision == false) {
+                    if (pesudoTreeRandom.Next(0, 101) < 30) map[x, y + 2] = 7;
+                }
+                collision = false;
+            }
+        }
+        return map;
+    }
+   
+
+    public void RenderMap(int[,] map, Tilemap groundTileMap, Tilemap caveTileMap,Tilemap waterTileMap, Tilemap environmentTileMap, TileBase groundTileBase, TileBase caveTileBase, TileBase waterTileBase, TileBase stoneTileBase, TileBase treeTileBase) {
         for (int x = 0; x< width; x++) {
             for (int y = 0; y < height; y++) {
                 if (map[x, y] == 1) {
@@ -377,6 +406,8 @@ public class RTProceduralGeneration : MonoBehaviour
                     waterTileMap.SetTile(new Vector3Int(x, y, 0), waterTileBase);
                 }else if (map[x, y] == 6) {
                     groundTileMap.SetTile(new Vector3Int(x, y, 0), stoneTileBase);
+                }else if (map[x,y] == 7) {
+                    environmentTileMap.SetTile(new Vector3Int(x, y, 0), treeTileBase);
                 }
             }
         }
@@ -386,6 +417,7 @@ public class RTProceduralGeneration : MonoBehaviour
         groundTileMap.ClearAllTiles();
         caveTileMap.ClearAllTiles();
         waterTileMap.ClearAllTiles();
+        environmentTileMap.ClearAllTiles();
     }
 
     int RandomWaterHeight(int min, int max) {
