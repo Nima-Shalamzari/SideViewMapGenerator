@@ -19,8 +19,9 @@ public class RTProceduralGeneration : MonoBehaviour
 
     [Header("Mineral Gen")]
     //Fill here with some info
-    [Range(0, 100)]
-    [SerializeField] int randomStoneFillPercent;
+    [Range(0, 1)]
+    [SerializeField] float randomStoneFillPercent;
+
     [Header("Cave Gen")]
     [Range(0,1)]//  for perlin noise cave we need thses two lines of code
     [SerializeField] float modifier;
@@ -42,7 +43,13 @@ public class RTProceduralGeneration : MonoBehaviour
     [SerializeField] Tilemap caveTileMap;
     [SerializeField] Tilemap waterTileMap;
 
+    [Header("Tile")]
     [SerializeField] float seed;
+    [SerializeField] float scale;
+    [SerializeField] int octaves;
+    [SerializeField] float persistance;
+    [SerializeField] float lacunarity;
+    float maxNoiseHeight, minNoiseHeight;
 
     protected int[,] map;
     private int tempGroundCheck;
@@ -64,6 +71,7 @@ public class RTProceduralGeneration : MonoBehaviour
         map = GenerateArray(width, height, true);
         map = TerrainGeneration(map);
         SmoothMap(smoothAmount);
+        map = stoneGeneration(map);
         map = caveAnalysis(map);
         map = surfaceWaterLevel(map);
         RenderMap(map, groundTileMap, caveTileMap,waterTileMap, groundTile, caveTile, waterTile, stoneTile);
@@ -96,9 +104,9 @@ public class RTProceduralGeneration : MonoBehaviour
                 //map[x, y] = (caveValue == 1)? 2 : 1;
                 float stoneValue = Mathf.PerlinNoise((pesudoStoneRandom.Next(1, 100) * modifier) + seed, (y * modifier) + seed);
                 map[x, y] = (pesudoRandom.Next(1, 100) < randomFillPercent) ? 1 : 2;
-                if (map[x,y] == 1) {
+                /*if (map[x,y] == 1) {
                     map[x, y] = ((stoneValue * 100) < randomStoneFillPercent) ? 6 : 1;
-                }
+                }*/ //activate this part to return back to default stone production.
                 //assist.GetSurroundingGround(x, y, minHeight, maxHeight);
 
             }
@@ -110,7 +118,7 @@ public class RTProceduralGeneration : MonoBehaviour
         for (int i = 0; i < smoothAmount; i++) {
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < perlinHeightArray[x]; y++) {
-                    if (y == 0 || ((x == 0 || x == width -1) && y < (perlinHeightArray[x] / 2))) {
+                    if (y == 0) {
                         map[x, y] = 6;
                     }
                     else if (x == 0 || y == 0 || x == width - 1 || y == perlinHeightArray[x] - 1) {
@@ -153,6 +161,101 @@ public class RTProceduralGeneration : MonoBehaviour
         }
         tempGroundCheck = (Ground >= Stone) ? 1 : 6;
         return groundCount;
+    }
+
+    //private int[,] stoneGeneration(int[,] map) {
+
+    //    for (int x = 0; x < width; x++) {
+    //        for (int y = 0; y < height; y++) {
+    //            stoneGenerationAssist(map, x, y);
+    //        }
+    //    }
+    //    return map;
+    //}
+
+    private int[,] stoneGeneration(int[,] map) {
+        float[,] noiseMap = new float[width, height];
+        if (scale <= 0) scale = 0.0001f;
+        maxNoiseHeight = float.MinValue;
+        minNoiseHeight = float.MaxValue;
+        float fillPercent = 60;
+        int modifiedHeight, modifiedHeightStartPoint;
+        float Scale;
+        for (int j = 0; j < 3; j++) {
+            for (int x = 0; x < width; x++) {
+                if (j == 0) {
+                    modifiedHeightStartPoint = 0;
+                    modifiedHeight = perlinHeightArray[x] / 3;
+                    Scale = 20;
+                }
+                else if (j == 1) {
+                    modifiedHeightStartPoint = perlinHeightArray[x] / 3;
+                    modifiedHeight = perlinHeightArray[x] * 2/3;
+                    Scale = 15;
+                }
+                else if (j == 2) {
+                    modifiedHeightStartPoint = perlinHeightArray[x] * 2/3;
+                    modifiedHeight = perlinHeightArray[x];
+                    Scale = 10;
+                }
+                else {
+                    return null;
+                }
+                for (int y = modifiedHeightStartPoint; y < modifiedHeight; y++) {
+                    float amplitude = 1;
+                    float frequency = 1;
+                    float noiseHeight = 0;
+                    for (int i = 0; i < octaves; i++) {
+                        float sampleX = x / Scale * frequency;
+                        float sampleY = y / Scale * frequency;
+                        float perlinValue = Mathf.PerlinNoise(sampleX + seed, sampleY + seed) * 2 - 1;
+                        noiseHeight += perlinValue * amplitude;
+                        amplitude *= persistance;
+                        frequency *= lacunarity;
+                    }
+                    if (noiseHeight > maxNoiseHeight) maxNoiseHeight = noiseHeight;
+                    else if (noiseHeight < minNoiseHeight) minNoiseHeight = noiseHeight;
+                    noiseMap[x, y] = noiseHeight;
+                }
+            }
+        }
+        for (int j = 0; j < 3; j++) {
+            if (j == 0) fillPercent = 0;
+            else if (j == 1) fillPercent = 0.4f;
+            else if (j == 2) fillPercent = 0.8f;
+            for (int x = 0; x < width; x++) {
+            if (j == 0) {
+                modifiedHeightStartPoint = 0;
+                modifiedHeight = perlinHeightArray[x] / 3;
+            }
+            else if (j == 1) {
+                modifiedHeightStartPoint = perlinHeightArray[x] / 3;
+                modifiedHeight = (perlinHeightArray[x] / 3) * 2;
+            }
+            else if (j == 2) {
+                modifiedHeightStartPoint = (perlinHeightArray[x] / 3) * 2;
+                modifiedHeight = perlinHeightArray[x];
+            }
+            else {
+                    return null;
+            }
+            for (int y = modifiedHeightStartPoint; y < modifiedHeight; y++) {
+                    //Debug.Log("noiseMap[" + X.ToString() + ", " + Y.ToString() + "] is equal to : " + noiseMap[X, Y]);
+                    noiseMap[x,y] = Mathf.InverseLerp(minNoiseHeight, maxNoiseHeight, noiseMap[x, y]);
+                    Debug.Log("noiseMap[" + x.ToString() + ", " + y.ToString() + "] is equal to : " + noiseMap[x, y]);
+                    if (noiseMap[x, y] > fillPercent && map[x, y] == 1) {
+                        map[x, y] = 6;
+                    }
+                    //Debug.Log("noiseMap["+X.ToString()+", "+Y.ToString()+"] is equal to : " + noiseMap[X, Y]);
+                }
+            }
+        }
+        
+        //Debug.Log("maxNoiseHeight is equal to : " + maxNoiseHeight);
+        //Debug.Log("minNoiseHeight is equal to : " + minNoiseHeight);
+        
+    
+        return map;
     }
 
     int[,] caveAnalysis(int[,] map) {
